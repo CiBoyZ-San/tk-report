@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a4731">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TK Report — Laporan Tandan Kosong</title>
+<style>
+  :root {
+    --hijau-tua:   #1a4731;
+    --hijau-mid:   #2d7a50;
+    --hijau-muda:  #4aad74;
+    --hijau-pucat: #e8f5ee;
+    --kuning:      #f5a623;
+    --kuning-muda: #fff8ec;
+    --abu:         #6b7280;
+    --abu-muda:    #f3f4f6;
+    --merah:       #dc2626;
+    --putih:       #ffffff;
+    --teks:        #111827;
+    --teks-muted:  #6b7280;
+    --border:      #e5e7eb;
+    --radius:      12px;
+    --shadow:      0 1px 3px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
+    --shadow-lg:   0 4px 16px rgba(0,0,0,.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--abu-muda);
+    color: var(--teks);
+    min-height: 100dvh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ── SCREEN SYSTEM ── */
+  .screen { display: none; min-height: 100dvh; flex-direction: column; }
+  .screen.aktif { display: flex; }
+
+  /* ── LOGIN ── */
+  #screen-login {
+    background: linear-gradient(160deg, var(--hijau-tua) 0%, var(--hijau-mid) 60%, var(--hijau-muda) 100%);
+    align-items: center; justify-content: center; padding: 32px 24px;
+  }
+  .login-box {
+    background: var(--putih);
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: 100%; max-width: 380px;
+    box-shadow: var(--shadow-lg);
+  }
+  .logo-area { text-align: center; margin-bottom: 28px; }
+  .logo-icon {
+    width: 64px; height: 64px; background: var(--hijau-pucat);
+    border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 32px; margin-bottom: 12px;
+  }
+  .logo-area h1 { font-size: 20px; font-weight: 700; color: var(--hijau-tua); }
+  .logo-area p  { font-size: 13px; color: var(--teks-muted); margin-top: 2px; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--teks); margin-bottom: 6px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 12px 14px;
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-size: 15px; color: var(--teks); background: var(--putih);
+    outline: none; transition: border-color .2s;
+    appearance: none; -webkit-appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--hijau-mid); }
+  .form-group .input-wrap { position: relative; }
+  .form-group .input-wrap select { padding-right: 36px; }
+  .chevron-icon {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    pointer-events: none; color: var(--abu);
+  }
+
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: var(--hijau-tua); color: var(--putih);
+    border: none; border-radius: var(--radius);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background .2s, transform .1s;
+    margin-top: 8px;
+  }
+  .btn-primary:active { background: var(--hijau-mid); transform: scale(.98); }
+
+  .error-msg {
+    background: #fef2f2; border: 1px solid #fecaca;
+    color: var(--merah); padding: 10px 14px; border-radius: 8px;
+    font-size: 13px; margin-bottom: 12px; display: none;
+  }
+
+  /* ── APP SHELL ── */
+  #screen-app { background: var(--abu-muda); }
+
+  .topbar {
+    background: var(--hijau-tua); color: var(--putih);
+    padding: 14px 18px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left h2 { font-size: 16px; font-weight: 700; }
+  .topbar-left p  { font-size: 12px; opacity: .75; margin-top: 1px; }
+  .btn-logout {
+    background: rgba(255,255,255,.15); border: none; color: var(--putih);
+    padding: 7px 13px; border-radius: 8px; font-size: 13px; cursor: pointer;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; background: var(--putih);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 60px; z-index: 90;
+  }
+  .tab {
+    flex: 1; padding: 13px 0; text-align: center;
+    font-size: 13px; font-weight: 600; color: var(--teks-muted);
+    border-bottom: 2px solid transparent; cursor: pointer;
+    transition: color .2s, border-color .2s;
+  }
+  .tab.aktif { color: var(--hijau-tua); border-bottom-color: var(--hijau-tua); }
+
+  /* ── TAB PANELS ── */
+  .tab-panel { display: none; flex: 1; padding: 16px; }
+  .tab-panel.aktif { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--putih); border-radius: var(--radius);
+    padding: 18px; box-shadow: var(--shadow); margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700; color: var(--hijau-tua);
+    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px;
+  }
+
+  /* ── FORM INPUT ── */
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .input-row .form-group { margin-bottom: 0; }
+
+  .form-group input[type="number"] { -moz-appearance: textfield; }
+  .form-group input[type="number"]::-webkit-inner-spin-button,
+  .form-group input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .unit-input { position: relative; }
+  .unit-input input { padding-right: 44px; }
+  .unit-label {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 13px; color: var(--teks-muted); pointer-events: none;
+  }
+
+  .foto-area {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 20px; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative; overflow: hidden;
+  }
+  .foto-area:hover { border-color: var(--hijau-mid); background: var(--hijau-pucat); }
+  .foto-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .foto-area .foto-icon { font-size: 28px; margin-bottom: 6px; }
+  .foto-area p { font-size: 13px; color: var(--teks-muted); }
+  .foto-preview { width: 100%; border-radius: 8px; margin-top: 10px; max-height: 200px; object-fit: cover; display: none; }
+
+  .btn-simpan {
+    width: 100%; padding: 15px;
+    background: var(--hijau-tua); color: var(--putih);
+    border: none; border-radius: var(--radius);
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: background .2s; margin-top: 4px;
+  }
+  .btn-simpan:active { background: var(--hijau-mid); }
+
+  /* ── RIWAYAT ── */
+  .riwayat-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .riwayat-header h3 { font-size: 15px; font-weight: 700; color: var(--teks); }
+  .btn-export {
+    background: var(--kuning); color: var(--hijau-tua);
+    border: none; padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .riwayat-item {
+    background: var(--putih); border-radius: var(--radius);
+    padding: 14px 16px; margin-bottom: 8px;
+    box-shadow: var(--shadow);
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 10px;
+  }
+  .riwayat-info { flex: 1; }
+  .riwayat-tanggal { font-size: 12px; color: var(--teks-muted); }
+  .riwayat-blok { font-size: 15px; font-weight: 700; color: var(--teks); margin: 2px 0; }
+  .riwayat-detail { font-size: 13px; color: var(--teks-muted); }
+  .riwayat-badge {
+    background: var(--hijau-pucat); color: var(--hijau-tua);
+    padding: 5px 10px; border-radius: 8px;
+    font-size: 13px; font-weight: 700; white-space: nowrap;
+  }
+  .btn-hapus {
+    background: none; border: none; color: #ccc; cursor: pointer;
+    padding: 2px 6px; font-size: 18px; line-height: 1;
+    transition: color .2s;
+  }
+  .btn-hapus:hover { color: var(--merah); }
+
+  .kosong-state {
+    text-align: center; padding: 40px 20px; color: var(--teks-muted);
+  }
+  .kosong-state .kosong-icon { font-size: 40px; margin-bottom: 8px; }
+  .kosong-state p { font-size: 14px; }
+
+  /* ── PROFIL ── */
+  .profil-card {
+    background: var(--hijau-tua); color: var(--putih);
+    border-radius: var(--radius); padding: 22px;
+    text-align: center; margin-bottom: 12px;
+  }
+  .profil-avatar {
+    width: 64px; height: 64px; background: var(--hijau-muda);
+    border-radius: 50%; display: inline-flex; align-items: center;
+    justify-content: center; font-size: 28px; margin-bottom: 10px;
+  }
+  .profil-nama { font-size: 18px; font-weight: 700; }
+  .profil-divisi { font-size: 13px; opacity: .75; margin-top: 2px; }
+
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-box {
+    background: var(--putih); border-radius: var(--radius);
+    padding: 16px; text-align: center; box-shadow: var(--shadow);
+  }
+  .stat-angka { font-size: 26px; font-weight: 800; color: var(--hijau-tua); }
+  .stat-label { font-size: 12px; color: var(--teks-muted); margin-top: 2px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--hijau-tua); color: var(--putih);
+    padding: 12px 20px; border-radius: 20px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: var(--shadow-lg); z-index: 999;
+    opacity: 0; transition: opacity .3s, transform .3s;
+    white-space: nowrap;
+  }
+  .toast.tampil { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── INSTALL BANNER ── */
+  .install-banner {
+    background: var(--kuning-muda); border: 1px solid #fde68a;
+    border-radius: var(--radius); padding: 12px 14px;
+    margin-bottom: 12px; display: none;
+    align-items: center; gap: 10px;
+  }
+  .install-banner.tampil { display: flex; }
+  .install-banner p { font-size: 13px; flex: 1; color: var(--teks); }
+  .btn-install {
+    background: var(--kuning); border: none; padding: 8px 12px;
+    border-radius: 8px; font-size: 13px; font-weight: 700;
+    color: var(--hijau-tua); cursor: pointer; white-space: nowrap;
+  }
+
+  @media (max-width: 360px) {
+    .input-row { grid-template-columns: 1fr; }
+  }
+
+  /* ── MODAL INSTALL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.55); z-index: 500;
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.tampil { display: flex; }
+  .modal-box {
+    background: var(--putih); border-radius: 20px 20px 0 0;
+    width: 100%; max-width: 480px;
+    padding: 24px 20px 32px; max-height: 90dvh; overflow-y: auto;
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .modal-header h3 { font-size: 17px; font-weight: 700; color: var(--teks); }
+  .btn-tutup {
+    background: var(--abu-muda); border: none;
+    width: 32px; height: 32px; border-radius: 50%;
+    font-size: 18px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; color: var(--abu);
+  }
+  .install-step {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .install-step:last-child { border-bottom: none; }
+  .step-num {
+    min-width: 32px; height: 32px; background: var(--hijau-tua);
+    color: var(--putih); border-radius: 50%; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+  }
+  .step-text h4 { font-size: 14px; font-weight: 700; color: var(--teks); margin-bottom: 3px; }
+  .step-text p  { font-size: 13px; color: var(--teks-muted); line-height: 1.5; }
+  .step-text .step-highlight {
+    display: inline-block; background: var(--hijau-pucat);
+    color: var(--hijau-tua); padding: 2px 8px; border-radius: 6px;
+    font-size: 12px; font-weight: 700; margin-top: 4px;
+  }
+  .btn-install-panduan {
+    width: 100%; padding: 14px; margin-top: 18px;
+    background: var(--hijau-tua); color: var(--putih);
+    border: none; border-radius: var(--radius);
+    font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .btn-install-card {
+    width: 100%; padding: 14px;
+    background: var(--hijau-pucat); color: var(--hijau-tua);
+    border: 1.5px solid var(--hijau-muda); border-radius: var(--radius);
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ LOGIN ═══════════════════════════════════ -->
+<div id="screen-login" class="screen aktif">
+  <div class="login-box">
+    <div class="logo-area">
+      <div class="logo-icon">🌴</div>
+      <h1>TK Report</h1>
+      <p>Laporan Tandan Kosong Digital</p>
+    </div>
+    <div class="error-msg" id="error-login">Username atau password salah.</div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="input-username" placeholder="Masukkan username" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="input-password" placeholder="Masukkan password" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Masuk</button>
+    <p style="text-align:center;font-size:12px;color:var(--teks-muted);margin-top:18px;">
+      Demo: mandor1 / pass123 &nbsp;|&nbsp; mandor2 / pass123
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ APP ═══════════════════════════════════ -->
+<div id="screen-app" class="screen">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2 id="topbar-nama">🌴 TK Report</h2>
+      <p id="topbar-tanggal"></p>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Keluar</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab aktif" onclick="gantiTab('input')">📝 Input</div>
+    <div class="tab" onclick="gantiTab('riwayat')">📋 Riwayat</div>
+    <div class="tab" onclick="gantiTab('profil')">👤 Profil</div>
+  </div>
+
+  <!-- ── TAB INPUT ── -->
+  <div id="tab-input" class="tab-panel aktif">
+    <div class="install-banner" id="install-banner">
+      <span>📲</span>
+      <p>Install aplikasi ini di HP Anda untuk akses offline.</p>
+      <button class="btn-install" onclick="doInstall()">Install</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Informasi Laporan</div>
+
+      <div class="form-group">
+        <label>Tanggal</label>
+        <input type="date" id="f-tanggal">
+      </div>
+
+      <div class="form-group">
+        <label>Blok / Divisi</label>
+        <div class="input-wrap">
+          <select id="f-blok">
+            <option value="">— Pilih Blok —</option>
+            <option>Blok A1 – Divisi 1</option>
+            <option>Blok A2 – Divisi 1</option>
+            <option>Blok A3 – Divisi 1</option>
+            <option>Blok B1 – Divisi 2</option>
+            <option>Blok B2 – Divisi 2</option>
+            <option>Blok B3 – Divisi 2</option>
+            <option>Blok C1 – Divisi 3</option>
+            <option>Blok C2 – Divisi 3</option>
+            <option>Blok C3 – Divisi 3</option>
+          </select>
+          <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label>Jumlah TK</label>
+          <div class="unit-input">
+            <input type="number" id="f-jumlah" placeholder="0" min="0">
+            <span class="unit-label">tandan</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Berat Total</label>
+          <div class="unit-input">
+            <input type="number" id="f-berat" placeholder="0.0" step="0.1" min="0">
+            <span class="unit-label">kg</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:12px">
+        <label>Luas Area</label>
+        <div class="unit-input">
+          <input type="number" id="f-luas" placeholder="0.00" step="0.01" min="0">
+          <span class="unit-label">Ha</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Dokumen & Keterangan</div>
+      <div class="form-group">
+        <label>Nomor SPB / Surat Jalan</label>
+        <input type="text" id="f-spb" placeholder="Contoh: SPB-2025-001">
+      </div>
+      <div class="form-group">
+        <label>Keterangan (opsional)</label>
+        <input type="text" id="f-keterangan" placeholder="Catatan tambahan...">
+      </div>
+      <div class="form-group">
+        <label>Foto Dokumentasi (opsional)</label>
+        <div class="foto-area" onclick="document.getElementById('f-foto').click()">
+          <input type="file" id="f-foto" accept="image/*" capture="environment" onchange="previewFoto(this)">
+          <div class="foto-icon">📷</div>
+          <p>Ketuk untuk ambil foto atau pilih dari galeri</p>
+          <img class="foto-preview" id="preview-img" alt="Preview foto">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-simpan" onclick="simpanLaporan()">💾 Simpan Laporan</button>
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- ── TAB RIWAYAT ── -->
+  <div id="tab-riwayat" class="tab-panel">
+    <div class="riwayat-header">
+      <h3>Laporan Tersimpan</h3>
+      <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+    <div id="list-riwayat"></div>
+  </div>
+
+  <!-- ── TAB PROFIL ── -->
+  <div id="tab-profil" class="tab-panel">
+    <div class="profil-card">
+      <div class="profil-avatar">👷</div>
+      <div class="profil-nama" id="profil-nama">—</div>
+      <div class="profil-divisi" id="profil-divisi">—</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-angka" id="stat-total">0</div>
+        <div class="stat-label">Total Laporan</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-angka" id="stat-bulan">0</div>
+        <div class="stat-label">Bulan Ini</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-angka" id="stat-tk">0</div>
+        <div class="stat-label">Total TK</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-angka" id="stat-kg">0</div>
+        <div class="stat-label">Total kg</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Pengaturan Blok</div>
+      <p style="font-size:13px;color:var(--teks-muted);margin-bottom:12px;">
+        Daftar blok/divisi yang tersedia di formulir input. Hubungi admin untuk perubahan.
+      </p>
+      <div id="daftar-blok" style="font-size:14px;color:var(--teks);line-height:2;"></div>
+    </div>
+
+    <button class="btn-install-card" onclick="dokumen('modal-install').classList.add('tampil')">
+      <span>&#x1F4F2;</span> Panduan Install Aplikasi di HP
+    </button>
+
+    <button class="btn-simpan" style="background:var(--merah)" onclick="doLogout()">Keluar Akun</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- Toast notifikasi -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ MODAL PANDUAN INSTALL ═══ -->
+<div class="modal-overlay" id="modal-install" onclick="tutupModalInstall(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>📲 Cara Install di HP Android</h3>
+      <button class="btn-tutup" onclick="dokumen('modal-install').classList.remove('tampil')">&#x2715;</button>
+    </div>
+
+    <div id="install-auto-wrap" style="display:none;margin-bottom:16px;">
+      <button class="btn-install-panduan" onclick="doInstall()">&#x2B07; Install Sekarang (Otomatis)</button>
+      <p style="text-align:center;font-size:12px;color:var(--teks-muted);margin-top:8px;">atau ikuti langkah manual di bawah</p>
+    </div>
+
+    <div class="install-step">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        <h4>Buka di Chrome</h4>
+        <p>Pastikan file ini dibuka menggunakan <strong>browser Chrome</strong> di HP Android.</p>
+      </div>
+    </div>
+    <div class="install-step">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <h4>Ketuk menu tiga titik</h4>
+        <p>Di pojok kanan atas Chrome, ketuk ikon <strong>tiga titik vertikal (&#x22EE;)</strong> untuk membuka menu.</p>
+        <span class="step-highlight">&#x22EE; Menu di pojok kanan atas</span>
+      </div>
+    </div>
+    <div class="install-step">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <h4>Pilih "Tambahkan ke layar utama"</h4>
+        <p>Cari dan ketuk opsi <strong>"Tambahkan ke layar utama"</strong> atau <strong>"Add to Home Screen"</strong>.</p>
+        <span class="step-highlight">Tambahkan ke layar utama</span>
+      </div>
+    </div>
+    <div class="install-step">
+      <div class="step-num">4</div>
+      <div class="step-text">
+        <h4>Konfirmasi &amp; Install</h4>
+        <p>Ketuk <strong>"Tambahkan"</strong> atau <strong>"Install"</strong> pada popup yang muncul. Ikon TK Report akan muncul di layar utama HP.</p>
+        <span class="step-highlight">&#x2705; Siap dipakai offline</span>
+      </div>
+    </div>
+
+    <div style="background:var(--kuning-muda);border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-top:16px;">
+      <p style="font-size:13px;color:var(--teks);">
+        &#x1F4A1; <strong>Catatan:</strong> Setelah diinstall, aplikasi bisa dibuka langsung dari layar utama HP <strong>tanpa perlu internet</strong>. Data tersimpan di HP masing-masing mandor.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// DATA KONFIGURASI
+// ════════════════════════════════════════
+const USERS = [
+  { username: 'mandor1', password: 'pass123', nama: 'Budi Santoso',  divisi: 'Divisi 1' },
+  { username: 'mandor2', password: 'pass123', nama: 'Slamet Riyadi', divisi: 'Divisi 2' },
+  { username: 'mandor3', password: 'pass123', nama: 'Agus Wahyono',  divisi: 'Divisi 3' },
+  { username: 'admin',   password: 'admin123', nama: 'Admin Kebun',  divisi: 'Semua Divisi' },
+];
+
+const BLOK_LIST = [
+  'Blok A1 – Divisi 1','Blok A2 – Divisi 1','Blok A3 – Divisi 1',
+  'Blok B1 – Divisi 2','Blok B2 – Divisi 2','Blok B3 – Divisi 2',
+  'Blok C1 – Divisi 3','Blok C2 – Divisi 3','Blok C3 – Divisi 3',
+];
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let userAktif = null;
+
+function getLaporan() {
+  return JSON.parse(localStorage.getItem('tk_laporan') || '[]');
+}
+function simpanKeLaporan(data) {
+  const arr = getLaporan();
+  arr.unshift(data);
+  localStorage.setItem('tk_laporan', JSON.stringify(arr));
+}
+function hapusLaporan(id) {
+  const arr = getLaporan().filter(l => l.id !== id);
+  localStorage.setItem('tk_laporan', JSON.stringify(arr));
+}
+
+// ════════════════════════════════════════
+// LOGIN / LOGOUT
+// ════════════════════════════════════════
+function doLogin() {
+  const u = document.getElementById('input-username').value.trim();
+  const p = document.getElementById('input-password').value;
+  const user = USERS.find(x => x.username === u && x.password === p);
+
+  if (!user) {
+    document.getElementById('error-login').style.display = 'block';
+    return;
+  }
+  document.getElementById('error-login').style.display = 'none';
+  userAktif = user;
+  localStorage.setItem('tk_session', JSON.stringify(user));
+  bukaApp();
+}
+
+function doLogout() {
+  userAktif = null;
+  localStorage.removeItem('tk_session');
+  dokumen('screen-app').classList.remove('aktif');
+  dokumen('screen-login').classList.add('aktif');
+  dokumen('input-username').value = '';
+  dokumen('input-password').value = '';
+}
+
+function cekSession() {
+  const s = localStorage.getItem('tk_session');
+  if (s) { userAktif = JSON.parse(s); bukaApp(); }
+}
+
+// ════════════════════════════════════════
+// APP
+// ════════════════════════════════════════
+function bukaApp() {
+  dokumen('screen-login').classList.remove('aktif');
+  dokumen('screen-app').classList.add('aktif');
+
+  // Topbar
+  dokumen('topbar-nama').textContent = '🌴 ' + userAktif.nama;
+  const now = new Date();
+  dokumen('topbar-tanggal').textContent = now.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Default tanggal hari ini
+  dokumen('f-tanggal').value = now.toISOString().split('T')[0];
+
+  // Profil
+  dokumen('profil-nama').textContent = userAktif.nama;
+  dokumen('profil-divisi').textContent = userAktif.divisi;
+  dokumen('daftar-blok').innerHTML = BLOK_LIST.map(b => `• ${b}`).join('<br>');
+
+  renderRiwayat();
+  updateStatProfil();
+  gantiTab('input');
+}
+
+function dokumen(id) { return document.getElementById(id); }
+
+function gantiTab(nama) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const names = ['input','riwayat','profil'];
+    t.classList.toggle('aktif', names[i] === nama);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('aktif'));
+  dokumen('tab-' + nama).classList.add('aktif');
+
+  if (nama === 'riwayat') renderRiwayat();
+  if (nama === 'profil') updateStatProfil();
+}
+
+// ════════════════════════════════════════
+// FORM INPUT
+// ════════════════════════════════════════
+function previewFoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = dokumen('preview-img');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    img.closest('.foto-area').querySelector('p').style.display = 'none';
+    img.closest('.foto-area').querySelector('.foto-icon').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function simpanLaporan() {
+  const tanggal   = dokumen('f-tanggal').value;
+  const blok      = dokumen('f-blok').value;
+  const jumlah    = dokumen('f-jumlah').value;
+  const berat     = dokumen('f-berat').value;
+  const luas      = dokumen('f-luas').value;
+  const spb       = dokumen('f-spb').value.trim();
+  const keterangan = dokumen('f-keterangan').value.trim();
+
+  if (!tanggal || !blok || !jumlah || !berat || !luas || !spb) {
+    tampilToast('⚠️ Lengkapi semua field wajib!');
+    return;
+  }
+
+  const fotoInput = dokumen('f-foto');
+  const fotoData = dokumen('preview-img').src || null;
+
+  const laporan = {
+    id: Date.now().toString(),
+    mandor: userAktif.nama,
+    divisi: userAktif.divisi,
+    tanggal, blok,
+    jumlah: Number(jumlah),
+    berat: Number(berat),
+    luas: Number(luas),
+    spb, keterangan,
+    foto: fotoData && fotoData.startsWith('data:') ? '[foto tersimpan]' : null,
+    waktuInput: new Date().toISOString(),
+  };
+
+  simpanKeLaporan(laporan);
+  resetForm();
+  tampilToast('✅ Laporan berhasil disimpan!');
+  updateStatProfil();
+}
+
+function resetForm() {
+  dokumen('f-blok').value = '';
+  dokumen('f-jumlah').value = '';
+  dokumen('f-berat').value = '';
+  dokumen('f-luas').value = '';
+  dokumen('f-spb').value = '';
+  dokumen('f-keterangan').value = '';
+  dokumen('f-foto').value = '';
+  const img = dokumen('preview-img');
+  img.style.display = 'none'; img.src = '';
+  const area = img.closest('.foto-area');
+  area.querySelector('p').style.display = '';
+  area.querySelector('.foto-icon').style.display = '';
+  // Set tanggal hari ini
+  dokumen('f-tanggal').value = new Date().toISOString().split('T')[0];
+}
+
+// ════════════════════════════════════════
+// RIWAYAT
+// ════════════════════════════════════════
+function renderRiwayat() {
+  const data = getLaporan().filter(l => l.mandor === userAktif.nama);
+  const el = dokumen('list-riwayat');
+
+  if (!data.length) {
+    el.innerHTML = `<div class="kosong-state"><div class="kosong-icon">📋</div><p>Belum ada laporan tersimpan.<br>Mulai input di tab Input.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = data.map(l => `
+    <div class="riwayat-item">
+      <div class="riwayat-info">
+        <div class="riwayat-tanggal">${formatTanggal(l.tanggal)} &nbsp;·&nbsp; SPB: ${l.spb || '-'}</div>
+        <div class="riwayat-blok">${l.blok}</div>
+        <div class="riwayat-detail">Berat: ${l.berat} kg &nbsp;|&nbsp; Luas: ${l.luas} Ha ${l.foto ? '&nbsp;📷' : ''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="riwayat-badge">${l.jumlah} tandan</div>
+        <button class="btn-hapus" onclick="konfirmasiHapus('${l.id}')" title="Hapus">×</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function konfirmasiHapus(id) {
+  if (confirm('Hapus laporan ini?')) {
+    hapusLaporan(id);
+    renderRiwayat();
+    updateStatProfil();
+    tampilToast('🗑️ Laporan dihapus');
+  }
+}
+
+function formatTanggal(str) {
+  return new Date(str + 'T00:00:00').toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+}
+
+// ════════════════════════════════════════
+// STATISTIK PROFIL
+// ════════════════════════════════════════
+function updateStatProfil() {
+  const data = getLaporan().filter(l => l.mandor === userAktif.nama);
+  const now = new Date();
+  const bulanIni = data.filter(l => {
+    const d = new Date(l.tanggal);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+
+  dokumen('stat-total').textContent = data.length;
+  dokumen('stat-bulan').textContent = bulanIni.length;
+  dokumen('stat-tk').textContent = data.reduce((s, l) => s + l.jumlah, 0);
+  dokumen('stat-kg').textContent = data.reduce((s, l) => s + l.berat, 0).toFixed(0);
+}
+
+// ════════════════════════════════════════
+// EXPORT CSV
+// ════════════════════════════════════════
+function exportCSV() {
+  const data = getLaporan().filter(l => l.mandor === userAktif.nama);
+  if (!data.length) { tampilToast('Belum ada data untuk diexport'); return; }
+
+  const header = ['Tanggal','Mandor','Divisi','Blok','Jumlah TK (tandan)','Berat (kg)','Luas (Ha)','No. SPB','Keterangan','Waktu Input'];
+  const rows = data.map(l => [
+    l.tanggal, l.mandor, l.divisi, l.blok,
+    l.jumlah, l.berat, l.luas, l.spb, l.keterangan || '', l.waktuInput
+  ]);
+
+  const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const tgl  = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `LaporanTK_${userAktif.nama.replace(/ /g,'_')}_${tgl}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  tampilToast('✅ CSV berhasil didownload!');
+}
+
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+let toastTimer;
+function tampilToast(msg) {
+  const el = dokumen('toast');
+  el.textContent = msg;
+  el.classList.add('tampil');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('tampil'), 2800);
+}
+
+// ════════════════════════════════════════
+// PWA INSTALL
+// ════════════════════════════════════════
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  dokumen('install-banner').classList.add('tampil');
+  dokumen('install-auto-wrap').style.display = 'block';
+});
+function doInstall() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    dokumen('install-banner').classList.remove('tampil');
+    dokumen('modal-install').classList.remove('tampil');
+  });
+}
+function tutupModalInstall(e) {
+  if (e.target === dokumen('modal-install')) dokumen('modal-install').classList.remove('tampil');
+}
+
+// ════════════════════════════════════════
+// ENTER KEY
+// ════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && dokumen('screen-login').classList.contains('aktif')) doLogin();
+});
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+cekSession();
+</script>
+
+<!-- PWA Manifest inline -->
+<script>
+const manifest = {
+  name: 'TK Report – Laporan Tandan Kosong',
+  short_name: 'TK Report',
+  start_url: '.',
+  display: 'standalone',
+  background_color: '#1a4731',
+  theme_color: '#1a4731',
+  icons: [{ src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🌴</text></svg>', sizes: '192x192', type: 'image/svg+xml' }]
+};
+const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+const link = document.createElement('link');
+link.rel = 'manifest'; link.href = URL.createObjectURL(blob);
+document.head.appendChild(link);
+</script>
+</body>
+</html>
